@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 -m mypy main.py --ignore-missing-imports
+python3 -m mypy aw_detector --ignore-missing-imports

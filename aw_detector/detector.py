@@ -91,5 +91,9 @@ def lockable_detector_example() -> None:
                 print("{} seems to be active!".format(activity))
 
 
-if __name__ == "__main__":
+def main():
     lockable_detector_example()
+
+
+if __name__ == "__main__":
+    main()
