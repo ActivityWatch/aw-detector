@@ -20,18 +20,17 @@ class Detector:
     def __init__(self):
         self.client = ActivityWatchClient("status-checker")
         buckets = self.client.get_buckets()
-        self.window_bucket_id = find(lambda bucket_id: "window" in bucket_id, buckets.keys())
+        # print(buckets)
+        # TODO: We need a better way to query buckets
+        window_bucket = find(lambda bucket: bucket["type"] == "currentwindow" and "testing" not in bucket["id"], buckets.values())
+        if window_bucket is None:
+            raise Exception("Bucket not found")
+        self.window_bucket_id = window_bucket["id"]
 
     def detect(self, filter_str: str):
-        dt_1min_ago = datetime.now(timezone.utc) - timedelta(minutes=1)
-        last_events = self.client.get_events(self.window_bucket_id, start=dt_1min_ago.isoformat(), limit=1)
+        last_events = self.client.get_events(self.window_bucket_id, limit=1)
         if last_events:
             last_event = last_events[0]
-            # print(last_event.timestamp)
-            # print(last_event.labels)
-
-            # FIXME: This assert fails sometimes, something is wrong somewhere...
-            assert dt_1min_ago < last_event.timestamp
 
             found = find(lambda label: filter_str in label, last_event.labels)
             if found:
