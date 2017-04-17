@@ -33,6 +33,7 @@ class Detector:
         if last_events:
             return last_events[0]
 
+    # TODO: Doesn't care about AFK state
     def detect(self, filter_str: str):
         last_event = self.get_last_event()
         if last_event is None:
