@@ -20,6 +20,15 @@ class Detector:
     def __init__(self):
         self.client = ActivityWatchClient("status-checker")
 
+    # TODO: Move to aw-client?
+    # TODO: Doesn't care if the event was old (as can happen if you have a dead watcher)
+    def _get_last_event(self, bucket_id: str) -> Event:
+        last_events = self.client.get_events(bucket_id, limit=1)
+        if last_events:
+            return last_events[0]
+        else:
+            raise Exception("no event found")
+
     def get_bucket_id(self, type: str):
         # TODO: Doesn't care about hostname
         # TODO (maybe): Create a better way to query buckets
@@ -30,17 +39,8 @@ class Detector:
             raise Exception("Bucket not found")
         return window_bucket["id"]
 
-    # TODO: Move to aw-client?
-    # TODO: Doesn't care if the event was old (as can happen if you have a dead watcher)
-    def get_last_event(self, bucket_id: str) -> Event:
-        last_events = self.client.get_events(bucket_id, limit=1)
-        if last_events:
-            return last_events[0]
-        else:
-            raise Exception("no event found")
-
     def detect(self, bucket_id: str, filter_str: str) -> Optional[Event]:
-        last_event = self.get_last_event(bucket_id)
+        last_event = self._get_last_event(bucket_id)
         return last_event if find(lambda label: filter_str in label.lower(), last_event.labels) else None
 
 
@@ -59,13 +59,13 @@ class LockableDetector(Detector):
         self.last_event_locked = False
         self.locked_last_events = {}
 
-    def get_last_event(self, bucket_id: str) -> Optional[Event]:
+    def _get_last_event(self, bucket_id: str) -> Optional[Event]:
         if self.last_event_locked:
             if bucket_id not in self.locked_last_events:
-                self.locked_last_events[bucket_id] = Detector.get_last_event(self, bucket_id)
+                self.locked_last_events[bucket_id] = Detector._get_last_event(self, bucket_id)
             return self.locked_last_events[bucket_id]
         else:
-            return Detector.get_last_event(self, bucket_id)
+            return Detector._get_last_event(self, bucket_id)
 
 
 example_activities = ["aw-detector", "fish", "vim", "chrome", "python"]
