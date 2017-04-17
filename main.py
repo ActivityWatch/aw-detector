@@ -30,7 +30,7 @@ class Detector:
             # print(last_event.timestamp)
             # print(last_event.labels)
 
-            # This assert fails sometimes, something is wrong somewhere...
+            # FIXME: This assert fails sometimes, something is wrong somewhere...
             assert dt_1min_ago < last_event.timestamp
 
             found = find(lambda label: filter_str in label, last_event.labels)
@@ -39,6 +39,6 @@ class Detector:
 
 
 detector = Detector()
-detector.detect("status-checker")
+detector.detect("aw-detector")
 detector.detect("zsh")
 detector.detect("chrome")
