@@ -43,8 +43,9 @@ class Detector:
             print("{} seems to be active!".format(filter_str))
 
 
-detector = Detector()
-detector.detect("aw-detector")
-detector.detect("fish")
-detector.detect("vim")
-detector.detect("chrome")
+if __name__ == "__main__":
+    detector = Detector()
+    detector.detect("aw-detector")
+    detector.detect("fish")
+    detector.detect("vim")
+    detector.detect("chrome")
