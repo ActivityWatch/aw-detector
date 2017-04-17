@@ -27,17 +27,24 @@ class Detector:
             raise Exception("Bucket not found")
         self.window_bucket_id = window_bucket["id"]
 
-    def detect(self, filter_str: str):
+    # TODO: Move to aw-client?
+    def get_last_event(self):
         last_events = self.client.get_events(self.window_bucket_id, limit=1)
         if last_events:
-            last_event = last_events[0]
+            return last_events[0]
 
-            found = find(lambda label: filter_str in label, last_event.labels)
-            if found:
-                print("{} seems to be active!".format(filter_str))
+    def detect(self, filter_str: str):
+        last_event = self.get_last_event()
+        if last_event is None:
+            raise Exception("no event found")
+
+        found = find(lambda label: filter_str in label, last_event.labels)
+        if found:
+            print("{} seems to be active!".format(filter_str))
 
 
 detector = Detector()
 detector.detect("aw-detector")
-detector.detect("zsh")
+detector.detect("fish")
+detector.detect("vim")
 detector.detect("chrome")
