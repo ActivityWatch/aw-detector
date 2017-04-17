@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Iterable, Callable, TypeVar
+from typing import Optional, Iterable, Callable, TypeVar, Dict
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,7 +17,7 @@ def find(pred: Callable[[T], Optional[T]], seq: Iterable[T]):
 
 
 class Detector:
-    def __init__(self):
+    def __init__(self) -> None:
         self.client = ActivityWatchClient("status-checker")
 
     # TODO: Move to aw-client?
@@ -29,7 +29,7 @@ class Detector:
         else:
             raise Exception("no event found")
 
-    def get_bucket_id(self, type: str):
+    def get_bucket_id(self, type: str) -> str:
         # TODO: Doesn't care about hostname
         # TODO (maybe): Create a better way to query buckets
         buckets = self.client.get_buckets()
@@ -47,10 +47,10 @@ class Detector:
 class LockableDetector(Detector):
     """Identical to Detector, but provides a lock on the last event in a bucket to do multiple checks on the same event"""
 
-    def __init__(self, *args, **kwargs):
-        Detector.__init__(self, *args, **kwargs)
+    def __init__(self) -> None:
+        Detector.__init__(self)
         self.last_event_locked = False
-        self.locked_last_events = {}
+        self.locked_last_events = {}  # type: Dict[str, Event]
 
     def __enter__(self):
         self.last_event_locked = True
@@ -71,7 +71,7 @@ class LockableDetector(Detector):
 example_activities = ["aw-detector", "fish", "vim", "chrome", "python"]
 
 
-def lockable_detector_example():
+def lockable_detector_example() -> None:
     """
     Without the lockable detector, a new currentwindow event right at the time of detection might invalidly
     detect more than one "activity" since multiple calls to `detect` would do one event fetch each.
