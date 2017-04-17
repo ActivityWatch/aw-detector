@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional, Iterable, Callable, TypeVar
 
@@ -22,6 +21,7 @@ class Detector:
         buckets = self.client.get_buckets()
         # print(buckets)
         # TODO: We need a better way to query buckets
+        # TODO: Doesn't care about hostname
         window_bucket = find(lambda bucket: bucket["type"] == "currentwindow" and "testing" not in bucket["id"], buckets.values())
         if window_bucket is None:
             raise Exception("Bucket not found")
