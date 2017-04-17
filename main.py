@@ -3,6 +3,7 @@ from typing import Optional, Iterable, Callable, TypeVar
 
 logging.basicConfig(level=logging.DEBUG)
 
+from aw_core.models import Event
 from aw_client import ActivityWatchClient
 
 T = TypeVar("T")
@@ -18,35 +19,41 @@ def find(pred: Callable[[T], Optional[T]], seq: Iterable[T]):
 class Detector:
     def __init__(self):
         self.client = ActivityWatchClient("status-checker")
-        buckets = self.client.get_buckets()
-        # print(buckets)
+
+    def get_bucket_id(self, type):
         # TODO: We need a better way to query buckets
         # TODO: Doesn't care about hostname
-        window_bucket = find(lambda bucket: bucket["type"] == "currentwindow" and "testing" not in bucket["id"], buckets.values())
+        buckets = self.client.get_buckets()
+        # print(buckets)
+        window_bucket = find(lambda bucket: bucket["type"] == type and "testing" not in bucket["id"], buckets.values())
         if window_bucket is None:
             raise Exception("Bucket not found")
-        self.window_bucket_id = window_bucket["id"]
+        return window_bucket["id"]
 
     # TODO: Move to aw-client?
-    def get_last_event(self):
-        last_events = self.client.get_events(self.window_bucket_id, limit=1)
+    def get_last_event(self, bucket_id):
+        last_events = self.client.get_events(bucket_id, limit=1)
         if last_events:
             return last_events[0]
 
-    # TODO: Doesn't care about AFK state
-    def detect(self, filter_str: str):
-        last_event = self.get_last_event()
+    def detect(self, bucket_id: str, filter_str: str) -> Optional[Event]:
+        last_event = self.get_last_event(bucket_id)
         if last_event is None:
             raise Exception("no event found")
+        # print(last_event)
 
-        found = find(lambda label: filter_str in label, last_event.labels)
-        if found:
-            print("{} seems to be active!".format(filter_str))
+        return last_event if find(lambda label: filter_str in label.lower(), last_event.labels) else None
 
 
 if __name__ == "__main__":
+    activities = ["aw-detector", "fish", "vim", "chrome"]
+
     detector = Detector()
-    detector.detect("aw-detector")
-    detector.detect("fish")
-    detector.detect("vim")
-    detector.detect("chrome")
+
+    window_bucket_id = detector.get_bucket_id(type="currentwindow")
+    afk_bucket_id = detector.get_bucket_id(type="afkstatus")
+
+    not_afk = detector.detect(afk_bucket_id, "not-afk")
+    for activity in activities:
+        if not_afk and detector.detect(window_bucket_id, activity):
+            print("{} seems to be active!".format(activity))
